@@ -1,4 +1,4 @@
-import streamlit as tf
+import streamlit as st
 import pandas as pd
 from plan_estudios import PLAN_LSI_2023
 from modelo import evaluar_situacion_materia
@@ -17,7 +17,7 @@ trabaja = st.sidebar.radio("¿Realiza actividad laboral?", ["No", "Si"])
 dedicacion = st.sidebar.radio("Dedicación al estudio fuera de clases:", ["Baja", "Alta"])
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("📋 Historial de Materias")
+st.sidebar.subheader("Historial de Materias")
 st.sidebar.info("Marcá el estado actual de tus materias previas para calcular las correlatividades automáticamente.")
 
 # Diccionario para almacenar el estado del historial en la sesión de Streamlit
@@ -48,7 +48,7 @@ materias_pendientes = {
 # Inicializar el contenedor de mensajes del chat si no existe
 if "mensajes_chat" not in st.session_state:
     st.session_state.mensajes_chat = [
-        {"role": "assistant", "content": "¡Hola! Soy tu Tutor de IA basado en la Res. 2024-723-CS. Configura tu perfil en la barra lateral y selecciona abajo qué materia pendiente deseas auditar hoy."}
+        {"role": "assistant", "content": "¡Hola! Soy tu Asistente de LSI. Configura tu perfil en la barra lateral y selecciona abajo qué materia pendiente deseas auditar hoy."}
     ]
 
 # Mostrar el historial de la conversación
@@ -65,7 +65,7 @@ if materias_pendientes:
         st.write("---")
         # El menú desplegable dinámico que filtra las aprobadas
         materia_seleccionada = st.selectbox(
-            "🔍 Seleccioná la materia que querés consultar:",
+            "Seleccioná la materia que querés consultar:",
             options=list(materias_pendientes.keys()),
             format_func=lambda x: f"{x} - {materias_pendientes[x]}"
         )
@@ -89,11 +89,11 @@ if materias_pendientes:
             
             # 3. Formatear la respuesta del asistente
             respuesta_bot = f"**Análisis para {nombre_mat}:**\n\n"
-            respuesta_bot += f"💬 *Observación:* {resultado['Observacion']}\n\n"
+            respuesta_bot += f"*Observación:* {resultado['Observacion']}\n\n"
             
             df_grafico = None
             if "No cumple" not in resultado['Observacion']:
-                respuesta_bot += "📊 **Predicción de condición final:**\n"
+                respuesta_bot += "**Predicción de condición final:**\n"
                 respuesta_bot += f"- 🔴 **Insuficiente (Libre/Abandono):** {resultado['Insuficiente']*100:.1f}%\n"
                 respuesta_bot += f"- 🟡 **Regular:** {resultado['Regular']*100:.1f}%\n"
                 respuesta_bot += f"- 🟢 **Promoción (Aprobada):** {resultado['Promocion']*100:.1f}%\n"
@@ -113,4 +113,4 @@ if materias_pendientes:
             # Forzar actualización de pantalla para mostrar los nuevos mensajes
             st.rerun()
 else:
-    st.success("🎉 ¡Felicitaciones! Según el historial de la barra lateral, ya aprobaste todas las materias cargadas en el sistema.")
+    st.success("¡Felicitaciones! Según el historial de la barra lateral, ya aprobaste todas las materias cargadas en el sistema.")
