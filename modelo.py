@@ -1,15 +1,33 @@
-# modelo.py
-from pgmpy.models import BayesianNetwork
+from pgmpy.models import DiscreteBayesianNetwork
 from pgmpy.factors.discrete import TabularCPD
 from pgmpy.inference import VariableElimination
 from plan_estudios import PLAN_LSI_2023
+
+def discretizar_contexto(horas_trabajo, horas_estudio):
+    """
+    Convierte las variables numéricas continuas a los estados binarios 
+    ('No'/'Si' y 'Bajo'/'Alto') que espera la Red Bayesiana.
+    """
+    # Discretización del Trabajo
+    if horas_trabajo == 0:
+        estado_trabajo = "No"
+    else:
+        estado_trabajo = "Si"
+        
+    # Discretización del Estudio (Umbral de dedicación)
+    if horas_estudio < 10:
+        estado_estudio = "Bajo"
+    else:
+        estado_estudio = "Alto"
+        
+    return estado_trabajo, estado_estudio
 
 def evaluar_situacion_materia(id_materia, historial_alumno, trabaja, dedicacion):
     """
     id_materia: str (ej. '401')
     historial_alumno: dict con el estado de sus materias {'203': 'Aprobada', '304': 'Regular'}
     trabaja: str ('No' o 'Si')
-    dedicacion: str ('Baja' o 'Alta')
+    dedicacion: str ('Bajo' o 'Alto')
     """
     materia_info = PLAN_LSI_2023[id_materia]
     
@@ -40,7 +58,7 @@ def evaluar_situacion_materia(id_materia, historial_alumno, trabaja, dedicacion)
     if materia_base:
         estructura.append(('Base_Academica', 'Condicion_Final'))
         
-    modelo = BayesianNetwork(estructura)
+    modelo = DiscreteBayesianNetwork(estructura)
     
     # Definición de las CPDs genéricas de contexto
     cpd_trabaja = TabularCPD(variable='Trabaja', variable_card=2, values=[[0.7], [0.3]], state_names={'Trabaja': ['No', 'Si']})
@@ -91,5 +109,5 @@ def evaluar_situacion_materia(id_materia, historial_alumno, trabaja, dedicacion)
         "Insuficiente": resultado.values[0],
         "Regular": resultado.values[1],
         "Promocion": resultado.values[2],
-        "Observacion": "Cumple con las correlativas de la Res. 2024-723-CS. Análisis probabilístico completado." [cite: 50]
+        "Observacion": "Cumple con las correlativas de la Res. 2024-723-CS. Análisis probabilístico completado."
     }
