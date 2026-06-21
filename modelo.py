@@ -69,30 +69,36 @@ def evaluar_situacion_materia(id_materia, historial_alumno, trabaja, dedicacion)
         cpd_base = TabularCPD(variable='Base_Academica', variable_card=2, values=[[0.5], [0.5]], state_names={'Base_Academica': ['Media', 'Alta']})
         modelo.add_cpds(cpd_base)
         
-        # Tabla de Probabilidad Condicional con 3 salidas: [Insuficiente, Regular, Promocion]
-        # Cardinalidad de evidencia: Base_Academica(2) x Dedicacion(2) x Trabaja(2) = 8 combinaciones
+        # TABLA CORREGIDA (Con materia base)
+        # Columnas en orden de pgmpy: 
+        # [Media,Bajo,No], [Media,Bajo,Si], [Media,Alto,No], [Media,Alto,Si], [Alta,Bajo,No], [Alta,Bajo,Si], [Alta,Alto,No], [Alta,Alto,Si]
         cpd_condicion = TabularCPD(
             variable='Condicion_Final', variable_card=3,
             values=[
-                # Insuficiente
-                [0.60, 0.45, 0.35, 0.20, 0.40, 0.25, 0.15, 0.05],
+                # Insuficiente (Sube si trabaja o si la dedicación/base es baja)
+                [0.55, 0.65, 0.25, 0.40, 0.35, 0.50, 0.05, 0.15],
                 # Regular
-                [0.35, 0.50, 0.55, 0.65, 0.45, 0.55, 0.55, 0.45],
-                # Promocion
-                [0.05, 0.05, 0.10, 0.15, 0.15, 0.20, 0.30, 0.50]
+                [0.40, 0.32, 0.60, 0.50, 0.45, 0.42, 0.45, 0.55],
+                # Promocion (Baja si trabaja)
+                [0.05, 0.03, 0.15, 0.10, 0.20, 0.08, 0.50, 0.30]
             ],
             evidence=['Base_Academica', 'Dedicacion', 'Trabaja'], evidence_card=[2, 2, 2],
             state_names={'Condicion_Final': ['Insuficiente', 'Regular', 'Promocion'],
                          'Base_Academica': ['Media', 'Alta'], 'Dedicacion': ['Bajo', 'Alto'], 'Trabaja': ['No', 'Si']}
         )
     else:
-        # Para materias de primer año sin correlativas previas
+        # TABLA CORREGIDA (Para materias de primer año sin correlativas previas)
+        # Columnas en orden de pgmpy:
+        # [Bajo, No], [Bajo, Si], [Alto, No], [Alto, Si]
         cpd_condicion = TabularCPD(
             variable='Condicion_Final', variable_card=3,
             values=[
-                [0.50, 0.30, 0.25, 0.10], # Insuficiente
-                [0.45, 0.55, 0.55, 0.45], # Regular
-                [0.05, 0.15, 0.20, 0.45]  # Promocion
+                # Insuficiente (Sube si trabaja)
+                [0.45, 0.60, 0.10, 0.25], 
+                # Regular
+                [0.50, 0.38, 0.45, 0.55], 
+                # Promocion (Baja si trabaja)
+                [0.05, 0.02, 0.45, 0.20]  
             ],
             evidence=['Dedicacion', 'Trabaja'], evidence_card=[2, 2],
             state_names={'Condicion_Final': ['Insuficiente', 'Regular', 'Promocion'],
