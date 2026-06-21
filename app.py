@@ -39,7 +39,8 @@ st.sidebar.info("Las materias siguientes se desbloquearán automáticamente a me
 # Diccionario para almacenar el estado del historial en la sesión de Streamlit
 if "historial" not in st.session_state:
     st.session_state.historial = {cod: "No Cursada" for cod in PLAN_LSI_2023.keys()}
-
+if "notas" not in st.session_state:
+    st.session_state.notas = {}
 # Renderizar solo las materias que están desbloqueadas según sus correlativas
 for cod, info in PLAN_LSI_2023.items():
     desbloqueada = True
@@ -59,13 +60,24 @@ for cod, info in PLAN_LSI_2023.items():
                 
     # 3. Dibujamos el selector SOLO si está desbloqueada
     if desbloqueada:
+        
         nuevo_estado = st.sidebar.selectbox(
             f"{cod} - {info['nombre']}",
             ["No Cursada", "Regular", "Aprobada"],
             index=["No Cursada", "Regular", "Aprobada"].index(st.session_state.historial[cod]),
             key=f"sidebar_{cod}"
         )
+
         st.session_state.historial[cod] = nuevo_estado
+
+        if nuevo_estado == "Aprobada":
+            st.session_state.notas[cod] = st.sidebar.number_input(
+                f"Nota de {cod}",
+                min_value=6,
+                max_value=10,
+                value=6,
+                key=f"nota_{cod}"
+            )
     else:
         # Si la materia queda bloqueada (ej. el usuario desmarcó una correlativa), 
         # forzamos su estado interno a "No Cursada" para mantener la consistencia en cascada.
@@ -120,15 +132,19 @@ if materias_pendientes:
             
             # 3. Llamamos al motor con los estados discretizados ('Alta', 'Part-time', etc.)
             resultado = evaluar_situacion_materia(
-                materia_seleccionada, 
-                st.session_state.historial, 
-                estado_trab,   
-                estado_estud   
+                materia_seleccionada,
+                st.session_state.historial,
+                st.session_state.notas,
+                estado_trab,
+                estado_estud
             )
             
             # 4. Formatear la respuesta del asistente
             respuesta_bot = f"**Análisis para {nombre_mat}:**\n\n"
             respuesta_bot += f"*Observación:* {resultado['Observacion']}\n\n"
+            if "NotaBase" in resultado:
+                respuesta_bot += f"📚 Nota correlativa utilizada: {resultado['NotaBase']}\n"
+                respuesta_bot += f"🎯 Base académica inferida: {resultado['BaseAcademica']}\n\n"
             
             df_grafico = None
             if "No cumple" not in resultado['Observacion']:

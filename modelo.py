@@ -21,8 +21,12 @@ def discretizar_contexto(horas_trabajo, horas_estudio):
         estado_estudio = "Alto"
         
     return estado_trabajo, estado_estudio
-
-def evaluar_situacion_materia(id_materia, historial_alumno, trabaja, dedicacion):
+def clasificar_base_academica(nota):
+    if nota >= 8:
+        return "Alta"
+    else:
+        return "Media"
+def evaluar_situacion_materia(id_materia, historial_alumno, notas_alumno, trabaja, dedicacion):
     """
     id_materia: str (ej. '401')
     historial_alumno: dict con el estado de sus materias {'203': 'Aprobada', '304': 'Regular'}
@@ -46,13 +50,22 @@ def evaluar_situacion_materia(id_materia, historial_alumno, trabaja, dedicacion)
     evidencia_ia = {'Trabaja': trabaja, 'Dedicacion': dedicacion}
     
     # Usamos la primera materia correlativa regular como el "indicador de base académica"
-    materia_base = materia_info["regulares"][0] if materia_info["regulares"] else None
-    
+    if materia_info["aprobadas"]:
+        materia_base = max(
+            materia_info["aprobadas"],
+            key=lambda m: notas_alumno.get(m, 6)
+            )
+    else:
+        materia_base = None
+        
     if materia_base:
         nodos_padres.append('Base_Academica')
-        # Mapeamos el estado real del alumno para el motor de inferencia
-        evidencia_ia['Base_Academica'] = 'Alta' if historial_alumno.get(materia_base) == 'Aprobada' else 'Media'
-    
+
+        nota_base = notas_alumno.get(materia_base, 6)
+
+        evidencia_ia['Base_Academica'] = clasificar_base_academica(nota_base)
+        base_academica = clasificar_base_academica(nota_base)
+        evidencia_ia['Base_Academica'] = base_academica
     # Construcción del grafo de influencia para la materia consultada
     estructura = [('Trabaja', 'Condicion_Final'), ('Dedicacion', 'Condicion_Final')]
     if materia_base:
@@ -115,5 +128,7 @@ def evaluar_situacion_materia(id_materia, historial_alumno, trabaja, dedicacion)
         "Insuficiente": resultado.values[0],
         "Regular": resultado.values[1],
         "Promocion": resultado.values[2],
+        "BaseAcademica": base_academica if materia_base else "No aplica",
+        "NotaBase": nota_base if materia_base else "No aplica",
         "Observacion": "Cumple con las correlativas de la Res. 2024-723-CS. Análisis probabilístico completado."
     }
