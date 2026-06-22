@@ -2,94 +2,68 @@ import pandas as pd
 import numpy as np
 
 np.random.seed(42)
-num_alumnos = 1000
+# Generamos 3000 registros (simulando historiales de cursado de múltiples alumnos en varias materias)
+num_registros = 3000
 
-# 1. Variables de Entrada (Nodos Padre)
-nivel_matematica = np.random.choice(['Alto', 'Medio', 'Bajo'], size=num_alumnos, p=[0.20, 0.50, 0.30])
-situacion_laboral = np.random.choice(['Trabaja', 'No_Trabaja'], size=num_alumnos, p=[0.40, 0.60])
+# 1. Variables de Entrada (Nodos Padre) - Etiquetas exactas de modelo.py
+trabaja = np.random.choice(['Si', 'No'], size=num_registros, p=[0.40, 0.60])
 
-# El tiempo de estudio extra es fundamental y se ve afectado por el trabajo
-horas_estudio_extra = []
-for trab in situacion_laboral:
-    if trab == 'Trabaja': # Si maneja sistemas internos o archivos en horario laboral, el tiempo libre baja
-        horas = np.random.choice(['Alta', 'Media', 'Baja'], p=[0.10, 0.40, 0.50])
+# El tiempo de estudio se ve penalizado por el trabajo
+dedicacion = []
+for t in trabaja:
+    if t == 'Si': 
+        # Carga laboral reduce el tiempo extra-áulico
+        d_nivel = np.random.choice(['Alto', 'Bajo'], p=[0.25, 0.75])
     else:
-        horas = np.random.choice(['Alta', 'Media', 'Baja'], p=[0.40, 0.45, 0.15])
-    horas_estudio_extra.append(horas)
+        d_nivel = np.random.choice(['Alto', 'Bajo'], p=[0.65, 0.35])
+    dedicacion.append(d_nivel)
 
-# 2. Variables Intermedias (Rendimiento Académico)
-estado_101 = [] # Algoritmos y Estructuras de Datos I
-estado_103 = [] # Algoritmos y Estructuras de Datos II
-estado_201 = [] # Paradigmas y Lenguajes
-estado_carrera = []
+# La base académica previa del alumno
+base_academica = np.random.choice(['Alta', 'Media'], size=num_registros, p=[0.45, 0.55])
 
-for i in range(num_alumnos):
-    h_extra = horas_estudio_extra[i]
+# 2. Variable Objetivo (Nodo Hijo)
+condicion_final = []
+
+for i in range(num_registros):
+    t = trabaja[i]
+    d = dedicacion[i]
+    b = base_academica[i]
     
-    # --- Asignatura 101: Algoritmos I (Sin correlativas previas) ---
-    if h_extra == 'Alta':
-        p_101 = [0.70, 0.25, 0.05] # [Aprobada, Regular, Libre]
-    elif h_extra == 'Media':
-        p_101 = [0.40, 0.40, 0.20]
+    # Lógica de distribución: [Insuficiente, Regular, Promocion]
+    # Se castiga la promoción si trabaja, y se premia si la base y dedicación son altas
+    if b == 'Alta' and d == 'Alto' and t == 'No':
+        p_cond = [0.05, 0.45, 0.50]
+    elif b == 'Alta' and d == 'Alto' and t == 'Si':
+        p_cond = [0.15, 0.55, 0.30]
+    elif b == 'Media' and d == 'Bajo' and t == 'Si':
+        p_cond = [0.65, 0.32, 0.03]
+    elif b == 'Media' and d == 'Bajo' and t == 'No':
+        p_cond = [0.55, 0.40, 0.05]
+    elif b == 'Alta' and d == 'Bajo' and t == 'No':
+        p_cond = [0.35, 0.45, 0.20]
+    elif b == 'Media' and d == 'Alto' and t == 'Si':
+        p_cond = [0.40, 0.50, 0.10]
+    elif b == 'Media' and d == 'Alto' and t == 'No':
+        p_cond = [0.25, 0.60, 0.15]
     else:
-        p_101 = [0.10, 0.30, 0.60]
-    
-    alg_1 = np.random.choice(['Aprobada', 'Regular', 'Libre'], p=p_101)
-    estado_101.append(alg_1)
-    
-    # --- Asignatura 103: Algoritmos II ---
-    # Regla: Para cursar (Regular) requiere 101. Para rendir (Aprobada) requiere 101.
-    if alg_1 == 'Libre':
-        alg_2 = 'No_Cursada' # La correlatividad bloquea el avance
-    else:
-        # Si regularizó o aprobó 101, puede cursar 103. 
-        # Pero si solo está Regular en 101, difícilmente apruebe 103 de una.
-        if alg_1 == 'Aprobada' and h_extra in ['Alta', 'Media']:
-            p_103 = [0.60, 0.30, 0.10]
-        else:
-            p_103 = [0.15, 0.50, 0.35]
-        alg_2 = np.random.choice(['Aprobada', 'Regular', 'Libre'], p=p_103)
-    estado_103.append(alg_2)
-
-    # --- Asignatura 201: Paradigmas y Lenguajes ---
-    # Regla: Para cursar Regular requiere 103. Para Aprobada requiere 101 y 103 Aprobadas.
-    if alg_2 in ['Libre', 'No_Cursada']:
-        paradigmas = 'No_Cursada'
-    else:
-        # Para aprobar Paradigmas, NECESITA tener 101 y 103 aprobadas previamente.
-        if alg_1 == 'Aprobada' and alg_2 == 'Aprobada':
-            if h_extra == 'Alta':
-                p_201 = [0.65, 0.30, 0.05]
-            else:
-                p_201 = [0.40, 0.45, 0.15]
-        else:
-            # Si le falta aprobar 101 o 103, el tope máximo es quedar Regular en 201.
-            p_201 = [0.0, 0.70, 0.30] 
+        # Alta, Bajo, Si
+        p_cond = [0.50, 0.42, 0.08]
         
-        paradigmas = np.random.choice(['Aprobada', 'Regular', 'Libre'], p=p_201)
-    estado_201.append(paradigmas)
+    condicion = np.random.choice(['Insuficiente', 'Regular', 'Promocion'], p=p_cond)
+    condicion_final.append(condicion)
 
-    # --- Variable Objetivo Final (Éxito del tramo inicial) ---
-    if paradigmas == 'Aprobada':
-        estado_final = 'Exitoso'
-    elif paradigmas == 'Regular' or alg_2 == 'Aprobada':
-        estado_final = 'Retraso_Leve'
-    elif alg_1 in ['Aprobada', 'Regular']:
-        estado_final = 'Retraso_Grave'
-    else:
-        estado_final = 'Abandono'
-        
-    estado_carrera.append(estado_final)
-
-# 3. Exportación
-df = pd.DataFrame({
-    'Situacion_Laboral': situacion_laboral,
-    'Horas_Estudio_Extra': horas_estudio_extra,
-    '101_Algoritmos_I': estado_101,
-    '103_Algoritmos_II': estado_103,
-    '201_Paradigmas': estado_201,
-    'Estado_Tramo_Inicial': estado_carrera
+# 3. Construcción y Exportación para Entrenamiento
+df_entrenamiento = pd.DataFrame({
+    'Trabaja': trabaja,
+    'Dedicacion': dedicacion,
+    'Base_Academica': base_academica,
+    'Condicion_Final': condicion_final
 })
 
-df.to_csv('dataset_red_bayesiana_correlativas.csv', index=False)
-print(f"Dataset generado. Distribución de estado final:\n{df['Estado_Tramo_Inicial'].value_counts()}")
+# Guardamos el CSV que leerá el BayesianEstimator
+nombre_archivo = 'dataset_entrenamiento_lsi.csv'
+df_entrenamiento.to_csv(nombre_archivo, index=False)
+
+print(f"Dataset generado exitosamente para pgmpy: '{nombre_archivo}'")
+print("\nDistribución de la Condición Final:")
+print(df_entrenamiento['Condicion_Final'].value_counts(normalize=True) * 100)
