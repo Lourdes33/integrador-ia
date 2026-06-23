@@ -4,6 +4,7 @@ from pgmpy.estimators import BayesianEstimator
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 import warnings
+from pgmpy.estimators import MaximumLikelihoodEstimator
 
 # Suprimir warnings de pgmpy para una salida más limpia en consola
 warnings.filterwarnings("ignore")
@@ -28,20 +29,18 @@ estructura = [
 ]
 modelo = DiscreteBayesianNetwork(estructura)
 
-# 4. Entrenar el modelo SÓLO con el 80% de los datos
-estimador = BayesianEstimator(modelo, df_train)
-cpds_aprendidos = estimador.get_parameters(prior_type="BDeu", equivalent_sample_size=10)
-modelo.add_cpds(*cpds_aprendidos)
+# 4. Entrenar el modelo SÓLO con el 80% de los datos (Usando MLE)
+estimador = MaximumLikelihoodEstimator(modelo, df_train)
+modelo.add_cpds(*estimador.get_parameters())
 
-# 5. Preparar los datos de prueba (Ocultamos la columna objetivo)
-X_test = df_test.drop(columns=['Condicion_Final'])
-y_true = df_test['Condicion_Final'] # La verdad absoluta
+# 5. Preparar los datos de prueba forzando el reseteo de índices
+X_test = df_test.drop(columns=['Condicion_Final']).reset_index(drop=True)
+y_true = df_test['Condicion_Final'].reset_index(drop=True).tolist() 
 
 # 6. Realizar predicciones
 print("La IA está realizando predicciones sobre los casos de prueba...")
-# El método predict toma las evidencias y devuelve la clase con mayor probabilidad
 y_pred_df = modelo.predict(X_test)
-y_pred = y_pred_df['Condicion_Final']
+y_pred = y_pred_df['Condicion_Final'].tolist()
 
 # 7. Calcular métricas de evaluación
 accuracy = accuracy_score(y_true, y_pred)

@@ -30,24 +30,31 @@ for i in range(num_registros):
     b = base_academica[i]
     
     # Lógica de distribución: [Insuficiente, Regular, Promocion]
-    # Se castiga la promoción si trabaja, y se premia si la base y dedicación son altas
+    # ¡Probabilidades polarizadas para forzar el aprendizaje estadístico!
     if b == 'Alta' and d == 'Alto' and t == 'No':
-        p_cond = [0.05, 0.45, 0.50]
-    elif b == 'Alta' and d == 'Alto' and t == 'Si':
-        p_cond = [0.15, 0.55, 0.30]
+        # El alumno ideal: 85% de chances de promocionar
+        p_cond = [0.05, 0.10, 0.85]
     elif b == 'Media' and d == 'Bajo' and t == 'Si':
-        p_cond = [0.65, 0.32, 0.03]
+        # Alumno en riesgo crítico: 85% de chances de quedar libre
+        p_cond = [0.85, 0.10, 0.05]
+    elif b == 'Alta' and d == 'Alto' and t == 'Si':
+        # Trabaja pero tiene base y dedicación: Fuerte tendencia a Regularizar o Promocionar
+        p_cond = [0.10, 0.60, 0.30]
     elif b == 'Media' and d == 'Bajo' and t == 'No':
-        p_cond = [0.55, 0.40, 0.05]
+        # No trabaja, pero no estudia y le falta base: Mayoría libre o regular raspando
+        p_cond = [0.60, 0.35, 0.05]
     elif b == 'Alta' and d == 'Bajo' and t == 'No':
-        p_cond = [0.35, 0.45, 0.20]
+        # Tiene facilidad pero no dedica tiempo
+        p_cond = [0.20, 0.60, 0.20]
     elif b == 'Media' and d == 'Alto' and t == 'Si':
-        p_cond = [0.40, 0.50, 0.10]
+        # Se esfuerza mucho pero el trabajo lo limita
+        p_cond = [0.25, 0.65, 0.10]
     elif b == 'Media' and d == 'Alto' and t == 'No':
-        p_cond = [0.25, 0.60, 0.15]
+        # Estudiante promedio esforzado
+        p_cond = [0.15, 0.70, 0.15]
     else:
-        # Alta, Bajo, Si
-        p_cond = [0.50, 0.42, 0.08]
+        # Alta, Bajo, Si -> Caso atípico, tendencia al centro
+        p_cond = [0.40, 0.50, 0.10]
         
     condicion = np.random.choice(['Insuficiente', 'Regular', 'Promocion'], p=p_cond)
     condicion_final.append(condicion)

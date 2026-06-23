@@ -3,6 +3,7 @@ from pgmpy.models import DiscreteBayesianNetwork
 from pgmpy.estimators import BayesianEstimator
 from pgmpy.inference import VariableElimination
 from plan_estudios import PLAN_LSI_2023
+from pgmpy.estimators import MaximumLikelihoodEstimator
 
 # Cargar el dataset de entrenamiento en memoria una sola vez al iniciar la app
 try:
@@ -85,16 +86,10 @@ def evaluar_situacion_materia(id_materia, historial_alumno, notas_alumno, trabaj
     modelo = DiscreteBayesianNetwork(estructura)
     
     # ---------------------------------------------------------
-    # SOLUCIÓN: Instanciación explícita del BayesianEstimator
+    # SOLUCIÓN: Entrenamiento por Máxima Verosimilitud (MLE)
     # ---------------------------------------------------------
-    # 1. Le pasamos el modelo vacío y el dataframe al estimador
-    estimador = BayesianEstimator(modelo, DF_ENTRENAMIENTO)
-    
-    # 2. Generamos los parámetros (las CPDs) aplicando el suavizado de Dirichlet (BDeu)
-    cpds_aprendidos = estimador.get_parameters(prior_type="BDeu", equivalent_sample_size=10)
-    
-    # 3. Inyectamos las tablas aprendidas a la red bayesiana
-    modelo.add_cpds(*cpds_aprendidos)
+    estimador = MaximumLikelihoodEstimator(modelo, DF_ENTRENAMIENTO)
+    modelo.add_cpds(*estimador.get_parameters())
     # ---------------------------------------------------------
 
     # 4. INFERENCIA
