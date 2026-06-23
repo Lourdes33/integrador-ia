@@ -5,6 +5,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 import warnings
 from pgmpy.estimators import MaximumLikelihoodEstimator
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Suprimir warnings de pgmpy para una salida más limpia en consola
 warnings.filterwarnings("ignore")
@@ -59,3 +61,36 @@ print(df_matriz)
 
 print("\n📄 Reporte de Clasificación Detallado:")
 print(classification_report(y_true, y_pred, target_names=etiquetas))
+
+
+print("\n🎨 Generando y guardando el gráfico de la Matriz de Confusión...")
+
+# 1. Configurar el tamaño y estilo de la figura
+plt.figure(figsize=(8, 6))
+
+# 2. Crear el mapa de calor usando la variable 'matriz' que ya calculó scikit-learn
+ax = sns.heatmap(
+    matriz, 
+    annot=True,          # Muestra los números adentro de los cuadrados
+    fmt='d',             # Formato entero (sin decimales)
+    cmap='Blues',        # Paleta de colores académicos (azul)
+    xticklabels=etiquetas, 
+    yticklabels=etiquetas,
+    cbar_kws={'label': 'Cantidad de Alumnos Predichos'}
+)
+
+# 3. Configuraciones visuales y de texto para el informe formal
+plt.title('Matriz de Confusión - Red Bayesiana Optimizada (MLE)', fontsize=14, fontweight='bold', pad=15)
+plt.ylabel('Condición Real (Dato Histórico)', fontsize=12, fontweight='bold')
+plt.xlabel('Condición Predicha (Inferencia de la IA)', fontsize=12, fontweight='bold')
+
+# 4. Ajustar los márgenes automáticamente
+plt.tight_layout()
+
+# 5. Guardar el gráfico en alta calidad (300 DPI es el estándar para impresión/PDF)
+plt.savefig("matriz_confusion_optimizada.png", format="png", dpi=300)
+
+print("¡Gráfico guardado exitosamente en tu carpeta como 'matriz_confusion_optimizada.png'!")
+
+# 6. Mostrar la ventana emergente
+plt.show()
